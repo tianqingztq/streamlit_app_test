@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diabetes Information Portal</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Landing Page Section -->
+      <div id="userTypeSection" class="section active">
+        <div class="hero-section">
+          <h1>Welcome to Diabetes Information Portal</h1>
+          <p class="hero-subtitle">
+            Your trusted resource for diabetes information and risk assessment.
+            Choose your path below to get started on your health journey.
+          </p>
+
+          <div class="user-type-cards">
+            <div class="user-card" onclick="selectUserType('hcp')">
+              <h3>Healthcare Professional</h3>
+              <p>
+                Access professional medical information, patient data, and
+                clinical resources.
+              </p>
+              <button class="button">Access HCP Portal</button>
+            </div>
+
+            <div class="user-card" onclick="selectUserType('customer')">
+              <h3>Individual User</h3>
+              <p>
+                Take a risk assessment survey or view educational resources
+                about diabetes.
+              </p>
+              <button class="button">Start Your Journey</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HCP Section -->
+      <div id="hcpSection" class="section">
+        <div class="hero-section">
+          <h2>Healthcare Professional Portal</h2>
+          <p class="hero-subtitle">
+            Welcome to the HCP portal. Please login or create an account.
+          </p>
+
+          <!-- Login/Register Toggle -->
+          <div class="auth-toggle">
+            <button
+              class="toggle-button active"
+              onclick="toggleAuthForm('login')"
+            >
+              Login
+            </button>
+            <button class="toggle-button" onclick="toggleAuthForm('register')">
+              Sign Up
+            </button>
+          </div>
+
+          <!-- Login Form -->
+          <div id="loginForm" class="auth-form active">
+            <div class="form-container">
+              <form class="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                  <label for="loginEmail"
+                    >Email Address<span class="required">*</span></label
+                  >
+                  <input
+                    type="email"
+                    id="loginEmail"
+                    required
+                    placeholder="Enter your email"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="loginPassword"
+                    >Password<span class="required">*</span></label
+                  >
+                  <div class="password-input-container">
+                    <input
+                      type="password"
+                      id="loginPassword"
+                      required
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      class="toggle-password"
+                      onclick="togglePasswordVisibility('loginPassword')"
+                    >
+                      Show
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <button type="submit" class="button login-button">
+                    Log In
+                  </button>
+                </div>
+
+                <div class="form-footer">
+                  <a href="#" onclick="showForgotPassword(event)"
+                    >Forgot Password?</a
+                  >
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Registration Form -->
+          <div id="registerForm" class="auth-form">
+            <div class="form-container">
+              <form class="register-form" onsubmit="handleRegistration(event)">
+                <div class="form-group">
+                  <label for="registerName"
+                    >Full Name<span class="required">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="registerName"
+                    required
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="registerEmail"
+                    >Email Address<span class="required">*</span></label
+                  >
+                  <input
+                    type="email"
+                    id="registerEmail"
+                    required
+                    placeholder="Enter your email"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="registerPassword"
+                    >Password<span class="required">*</span></label
+                  >
+                  <div class="password-input-container">
+                    <input
+                      type="password"
+                      id="registerPassword"
+                      required
+                      placeholder="Enter your password"
+                      pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                      title="Must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters"
+                    />
+                    <button
+                      type="button"
+                      class="toggle-password"
+                      onclick="togglePasswordVisibility('registerPassword')"
+                    >
+                      Show
+                    </button>
+                  </div>
+                  <span class="help-text"
+                    >Password must be at least 8 characters long and include
+                    uppercase, lowercase, and numbers</span
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="confirmPassword"
+                    >Confirm Password<span class="required">*</span></label
+                  >
+                  <div class="password-input-container">
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      required
+                      placeholder="Confirm your password"
+                    />
+                    <button
+                      type="button"
+                      class="toggle-password"
+                      onclick="togglePasswordVisibility('confirmPassword')"
+                    >
+                      Show
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="licenseNumber"
+                    >Medical License Number<span class="required"
+                      >*</span
+                    ></label
+                  >
+                  <input
+                    type="text"
+                    id="licenseNumber"
+                    required
+                    placeholder="Enter your medical license number"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <button type="submit" class="button register-button">
+                    Create Account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <button class="button back-button" onclick="goBack()">
+            Back to Home
+          </button>
+        </div>
+      </div>
+
+      <!-- Add this new section for HCP Dashboard -->
+      <div id="hcpDashboard" class="section">
+        <div class="hero-section">
+          <h2>HCP Dashboard</h2>
+          <p class="welcome-message">Welcome, <span id="hcpName"></span></p>
+
+          <div class="dashboard-container">
+            <div class="dashboard-menu">
+              <button
+                class="button"
+                onclick="showDashboardSection('patientData')"
+              >
+                Patient Data
+              </button>
+              <button
+                class="button"
+                onclick="showDashboardSection('analytics')"
+              >
+                Analytics
+              </button>
+              <button
+                class="button"
+                onclick="showDashboardSection('resources')"
+              >
+                Resources
+              </button>
+            </div>
+
+            <div class="dashboard-content">
+              <div id="patientData" class="dashboard-section">
+                <h3>Patient Data</h3>
+                <p>View and manage patient information here.</p>
+              </div>
+
+              <div id="analytics" class="dashboard-section">
+                <h3>Analytics</h3>
+                <p>View patient statistics and trends.</p>
+              </div>
+
+              <div id="resources" class="dashboard-section">
+                <h3>Professional Resources</h3>
+                <p>Access medical resources and guidelines.</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="button logout-button" onclick="handleLogout()">
+            Log Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Customer Options -->
+      <div id="customerSection" class="section">
+        <div class="hero-section">
+          <h2>What Would You Like to Do?</h2>
+          <p class="hero-subtitle">
+            Choose an option to continue your health journey
+          </p>
+          <button class="button" onclick="showSection('surveySection')">
+            Take Diabetes Risk Survey
+          </button>
+          <button
+            class="button secondary"
+            onclick="showSection('visualizationSection')"
+          >
+            View Diabetes Information
+          </button>
+          <button class="button back-button" onclick="goBack()">
+            Back to Home
+          </button>
+        </div>
+      </div>
+
+      <!-- Survey Section -->
+      <div id="surveySection" class="section">
+        <div class="hero-section">
+          <h2>Diabetes Risk Assessment Survey</h2>
+          <p class="hero-subtitle">
+            Please answer all questions accurately for the best assessment.
+          </p>
+        </div>
+
+        <form class="survey-form" onsubmit="submitSurvey(event)">
+          <!-- Personal Information -->
+          <div class="form-category">
+            <h3>Personal Information</h3>
+
+            <div class="form-group">
+              <label for="gender"
+                >What is your gender?<span class="required">*</span></label
+              >
+              <select id="gender" required>
+                <option value="">Select an option...</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="age"
+                >What is your age?<span class="required">*</span></label
+              >
+              <input type="number" id="age" required min="18" max="120" />
+            </div>
+
+            <div class="form-group">
+              <label for="bmi"
+                >What is your BMI (Body Mass Index)?<span class="required"
+                  >*</span
+                ></label
+              >
+              <input
+                type="number"
+                step="0.1"
+                id="bmi"
+                required
+                min="10"
+                max="100"
+              />
+              <span class="help-text">Enter a number between 10 and 100</span>
+            </div>
+          </div>
+
+          <!-- Health Conditions -->
+          <div class="form-category">
+            <h3>Health Conditions</h3>
+
+            <div class="form-group">
+              <label for="bloodPressure"
+                >Do you have high blood pressure?<span class="required"
+                  >*</span
+                ></label
+              >
+              <select id="bloodPressure" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cholesterol"
+                >Do you have high cholesterol?<span class="required"
+                  >*</span
+                ></label
+              >
+              <select id="cholesterol" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="cholesterolCheck"
+                >Have you had cholesterol check in 5 years?<span
+                  class="required"
+                  >*</span
+                ></label
+              >
+              <select id="cholesterolCheck" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="stroke"
+                >Have you had a stroke?<span class="required">*</span></label
+              >
+              <select id="stroke" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="heartDisease"
+                >Have you had coronary heart disease (CHD) or myocardial
+                infarction (MI)?<span class="required">*</span></label
+              >
+              <select id="heartDisease" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="difficultyWalking"
+                >Do you have serious difficulty walking or climbing stairs?<span
+                  class="required"
+                  >*</span
+                ></label
+              >
+              <select id="difficultyWalking" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Lifestyle Factors -->
+          <div class="form-category">
+            <h3>Lifestyle Factors</h3>
+
+            <div class="form-group">
+              <label for="smoking"
+                >Have you smoked at least 100 cigarettes in your entire
+                life?<span class="required">*</span></label
+              >
+              <select id="smoking" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="physicalActivity"
+                >Have you had physical activity in past 30 days - not including
+                job?<span class="required">*</span></label
+              >
+              <select id="physicalActivity" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fruitConsumption"
+                >Do you consume Fruit 1 or more times per day?<span
+                  class="required"
+                  >*</span
+                ></label
+              >
+              <select id="fruitConsumption" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="vegetableConsumption"
+                >Do you consume Vegetables 1 or more times per day?<span
+                  class="required"
+                  >*</span
+                ></label
+              >
+              <select id="vegetableConsumption" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="heavyDrinker"
+                >Are you a heavy drinker? (adult men having more than 14 drinks
+                per week and adult women having more than 7 drinks per
+                week)<span class="required">*</span></label
+              >
+              <select id="heavyDrinker" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Health Care Access -->
+          <div class="form-category">
+            <h3>Health Care Access</h3>
+
+            <div class="form-group">
+              <label for="healthCoverage"
+                >Do you have any kind of health care coverage, including health
+                insurance, prepaid plans such as HMO, etc.?<span
+                  class="required"
+                  >*</span
+                ></label
+              >
+              <select id="healthCoverage" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="costBarrier"
+                >Was there a time in the past 12 months when you needed to see a
+                doctor but could not because of cost?<span class="required"
+                  >*</span
+                ></label
+              >
+              <select id="costBarrier" required>
+                <option value="">Select an option...</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Health Status -->
+          <div class="form-category">
+            <h3>Health Status</h3>
+
+            <div class="form-group">
+              <label for="generalHealth"
+                >Would you say that in general your health is:<span
+                  class="required"
+                  >*</span
+                ></label
+              >
+              <select id="generalHealth" required>
+                <option value="">Select an option...</option>
+                <option value="1">1 - Excellent</option>
+                <option value="2">2 - Very Good</option>
+                <option value="3">3 - Good</option>
+                <option value="4">4 - Fair</option>
+                <option value="5">5 - Poor</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="mentalHealth"
+                >For how many days during the past 30 days was your mental
+                health not good?<span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="mentalHealth"
+                required
+                min="0"
+                max="30"
+              />
+              <span class="help-text">Enter a number between 0 and 30</span>
+            </div>
+
+            <div class="form-group">
+              <label for="physicalHealth"
+                >For how many days during the past 30 days was your physical
+                health not good?<span class="required">*</span></label
+              >
+              <input
+                type="number"
+                id="physicalHealth"
+                required
+                min="0"
+                max="30"
+              />
+              <span class="help-text">Enter a number between 0 and 30</span>
+            </div>
+          </div>
+
+          <!-- Education and Income -->
+          <div class="form-category">
+            <h3>Education and Income</h3>
+
+            <div class="form-group">
+              <label for="education"
+                >What is your education level?<span class="required"
+                  >*</span
+                ></label
+              >
+              <select id="education" required>
+                <option value="">Select an option...</option>
+                <option value="1">
+                  1 - Never attended school or only kindergarten
+                </option>
+                <option value="2">2 - Grades 1 through 8 (Elementary)</option>
+                <option value="3">
+                  3 - Grades 9 through 11 (Some high school)
+                </option>
+                <option value="4">
+                  4 - Grade 12 or GED (High school graduate)
+                </option>
+                <option value="5">
+                  5 - College 1 year to 3 years (Some college or technical
+                  school)
+                </option>
+                <option value="6">
+                  6 - College 4 years or more (College graduate)
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="income"
+                >What is your Income scale?<span class="required"
+                  >*</span
+                ></label
+              >
+              <select id="income" required>
+                <option value="">Select an option...</option>
+                <option value="1">1 - Less than $10,000</option>
+                <option value="2">2 - $10,000 to $15,000</option>
+                <option value="3">3 - $15,000 to $20,000</option>
+                <option value="4">4 - $20,000 to $25,000</option>
+                <option value="5">5 - $25,000 to $35,000</option>
+                <option value="6">6 - $35,000 to $50,000</option>
+                <option value="7">7 - $50,000 to $75,000</option>
+                <option value="8">8 - $75,000 or more</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="button">Submit Survey</button>
+            <button
+              type="button"
+              class="button secondary"
+              onclick="showSection('customerSection')"
+            >
+              Back
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Visualization Section -->
+      <div id="visualizationSection" class="section">
+        <div class="hero-section">
+          <h2>Diabetes Information Visualization</h2>
+          <div class="visualization">
+            <p>Visualization content would go here</p>
+            <p>(Charts, graphs, and educational content about diabetes)</p>
+          </div>
+          <button
+            class="button back-button"
+            onclick="showSection('customerSection')"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>
