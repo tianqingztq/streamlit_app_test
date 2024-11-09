@@ -12,6 +12,10 @@ from fhirclient.models.codeableconcept import CodeableConcept
 from fhirclient.models.quantity import Quantity
 from fhirclient.models.narrative import Narrative
 from fhirclient.models.meta import Meta
+from fhirclient.models.medicationrequest import MedicationRequest
+from fhirclient.models.dosage import Dosage
+import uuid  # Import the uuid library
+
 
 
 from data_clean import (
@@ -25,7 +29,7 @@ from data_clean import (
 )
 
 # Use public server URL
-FHIR_SERVER_URL = "http://localhost:3838/fhir"
+FHIR_SERVER_URL = "https://3027-2600-1700-5a64-9200-9c05-9314-1e57-fe0a.ngrok-free.app/fhir/"
 
 # FHIR serve settings
 settings = {
@@ -89,32 +93,6 @@ def create_patient_resource(row):
 
     patient.extension = extensions
     return patient
-
-# create Encounter resource
-# def create_encounter_resource(row):
-#     encounter = Encounter()
-#     encounter.id = str(row['encounter_id'])
-#     encounter.status = "finished"
-#     encounter.subject = FHIRReference({"reference": f"Patient/{row['patient_nbr']}"})
-
-#     encounter.class_fhir = Coding()
-#     encounter.class_fhir.system = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
-#     encounter.class_fhir.code = str(row['admission_type_id'])
-#     encounter.class_fhir.display = "admission type"
-
-#     hospitalization = EncounterHospitalization()
-#     discharge_disposition = CodeableConcept()
-#     discharge_disposition.coding = [
-#         Coding({
-#             "system": "http://terminology.hl7.org/CodeSystem/discharge-disposition",
-#             "code": str(row['discharge_disposition_id']),
-#             "display": "discharge disposition"
-#         })
-#     ]
-#     hospitalization.dischargeDisposition = discharge_disposition
-    
-#     encounter.hospitalization = hospitalization
-#     return encounter
 
 # Create Observation resource
 def create_observation_resources(row):
@@ -332,8 +310,182 @@ def create_observation_resources(row):
 
 
 
-# Create MedicationStatement Resource
-# def create_medication_statement(row, medication):
+
+
+# Create Medication Statement Resource
+def get_medication_code(med_name):
+    # Mapping of medications with SNOMED and RxNorm codes and their corresponding display names
+    medication_mapping = {
+        "metformin": {
+            'snomed': {'code': '372567009', 'display': 'Metformin'},
+            'RxNorm': {'code': '6809', 'display': 'metformin'}
+        },
+        "repaglinide": {
+            'snomed': {'code': '386964000', 'display': 'Repaglinide'},
+            'RxNorm': {'code': '73044', 'display': 'repaglinide'}
+        },
+        "nateglinide": {
+            'snomed': {'code': '387070004', 'display': 'Nateglinide'},
+            'RxNorm': {'code': '274332', 'display': 'nateglinide'}
+        },
+        "chlorpropamide": {
+            'snomed': {'code': '386991003', 'display': 'Chlorpropamide'},
+            'RxNorm': {'code': '2404', 'display': 'chlorpropamide'}
+        },
+        "glimepiride": {
+            'snomed': {'code': '386966003', 'display': 'Glimepiride'},
+            'RxNorm': {'code': '25789', 'display': 'glimepiride'}
+        },
+        "acetohexamide": {
+            'snomed': {'code': '387210001', 'display': 'Acetohexamide'},
+            'RxNorm': {'code': '173', 'display': 'acetohexamide'}
+        },
+        "glipizide": {
+            'snomed': {'code': '387143009', 'display': 'Glipizide'},
+            'RxNorm': {'code': '4821', 'display': 'glipizide'}
+        },
+        "glyburide": {
+            'snomed': {'code': '387466004', 'display': 'Glyburide'},
+            'RxNorm': {'code': '4815', 'display': 'glyburide'}
+        },
+        "tolbutamide": {
+            'snomed': {'code': '373481003', 'display': 'Tolbutamide'},
+            'RxNorm': {'code': '10635', 'display': 'tolbutamide'}
+        },
+        "pioglitazone": {
+            'snomed': {'code': '395828009', 'display': 'Pioglitazone'},
+            'RxNorm': {'code': '33738', 'display': 'pioglitazone'}
+        },
+        "rosiglitazone": {
+            'snomed': {'code': '395869000', 'display': 'Rosiglitazone'},
+            'RxNorm': {'code': '84108', 'display': 'rosiglitazone'}
+        },
+        "acarbose": {
+            'snomed': {'code': '386965004', 'display': 'Acarbose'},
+            'RxNorm': {'code': '16681', 'display': 'acarbose'}
+        },
+        "miglitol": {
+            'snomed': {'code': '109071007', 'display': 'Miglitol'},
+            'RxNorm': {'code': '30009', 'display': 'miglitol'}
+        },
+        "troglitazone": {
+            'snomed': {'code': '386967007', 'display': 'Troglitazone'},
+            'RxNorm': {'code': '72610', 'display': 'troglitazone'}
+        },
+        "tolazamide": {
+            'snomed': {'code': '387186009', 'display': 'Tolazamide'},
+            'RxNorm': {'code': '10633', 'display': 'tolazamide'}
+        },
+        "examide": {
+            'snomed': {'code': '108476002', 'display': 'Torasemide'},
+            'RxNorm': {'code': '38413', 'display': 'torasemide'}
+        },
+        "citoglipton": {
+            'snomed': {'code': '423307000', 'display': 'Sitagliptin'},
+            'RxNorm': {'code': '593411', 'display': 'sitagliptin'}
+        },
+        "insulin": {
+            'snomed': {'code': '67866001', 'display': 'Insulin'},
+            'RxNorm': {'code': '400008', 'display': 'insulin glulisine'}
+        },
+        "glyburide-metformin": {
+            'snomed': {'code': '776106002', 'display': 'Glyburide and Metformin'},
+            'RxNorm': {'code': '285129', 'display': 'glyburide / metformin'}
+        },
+        "glipizide-metformin": {
+            'snomed': {'code': '776113002', 'display': 'Glipizide and Metformin'},
+            'RxNorm': {'code': '352381', 'display': 'glipizide / metformin'}
+        },
+        "glimepiride-pioglitazone": {
+            'snomed': {'code': '776110004', 'display': 'Glimepiride and Pioglitazone'},
+            'RxNorm': {'code': '647235', 'display': 'glimepiride / pioglitazone'}
+        },
+        "metformin-rosiglitazone": {
+            'snomed': {'code': '776716003', 'display': 'Metformin and Rosiglitazone'},
+            'RxNorm': {'code': '614348', 'display': 'metformin / rosiglitazone'}
+        },
+        "metformin-pioglitazone": {
+            'snomed': {'code': '776714000', 'display': 'Metformin and Pioglitazone'},
+            'RxNorm': {'code': '607999', 'display': 'metformin / pioglitazone'}
+        }
+    }
+    return medication_mapping.get(med_name.lower(), None)  # Return None if not found
+
+def create_medication_request(row):
+    requests = []  # Initialize the list to hold all medication requests
+
+    # List of medication columns to check
+    medication_columns = [
+        'metformin', 'repaglinide', 'nateglinide', 'chlorpropamide',
+        'glimepiride', 'acetohexamide', 'glipizide', 'glyburide',
+        'tolbutamide', 'pioglitazone', 'rosiglitazone', 'acarbose',
+        'miglitol', 'troglitazone', 'tolazamide', 'examide',
+        'insulin', 'glyburide-metformin',
+        'glipizide-metformin', 'glimepiride-pioglitazone',
+        'metformin-rosiglitazone', 'metformin-pioglitazone'
+    ]
+    
+    for medicine in medication_columns:
+        med_value = row[medicine]  # Get the value for the medication column
+        medication_info = get_medication_code(medicine)  # Get the corresponding codes and displays
+
+        if medication_info:  # Check if we have medication information
+            request = MedicationRequest()  # Create a new MedicationRequest instance
+            request.id = f"{medicine}-{str(uuid.uuid4())}"
+            request.priority = 'routine'
+            
+            # Determine status based on the medication value
+            if med_value == "No":
+                request.status = "unknown"  # Indicating no information on medication prescribed
+                request.intent = 'order'
+                # Add dosage instruction as an instance of Dosage
+                dosage_instruction = Dosage()
+                dosage_instruction.text = f"Dosage was {row.get(f'{medicine}_dosage_change', 'Unknown')}"  # Dosage change instruction
+                request.dosageInstruction = [dosage_instruction]  # Set the dosage instruction
+            else:
+                request.status = "active"  # Medication is prescribed
+                request.intent = 'option'
+                # Add dosage instruction as an instance of Dosage
+                dosage_instruction = Dosage()
+                dosage_instruction.text = f"Dosage was {row.get(f'{medicine}_dosage_change', {med_value})}"  # Dosage change instruction
+                request.dosageInstruction = [dosage_instruction]  # Set the dosage instruction
+            
+
+            # Set the medication codeable concept
+            medication_codeable_concept = CodeableConcept()
+
+            # Create SNOMED coding
+            snomed_coding = Coding()
+            snomed_coding.system = "http://snomed.info/sct"
+            snomed_coding.code = medication_info['snomed']['code']  # SNOMED code
+            snomed_coding.display = medication_info['snomed']['display']  # Display name for SNOMED
+
+            # Create RxNorm coding
+            rxnorm_coding = Coding()
+            rxnorm_coding.system = "http://www.nlm.nih.gov/research/umls/rxnorm"
+            rxnorm_coding.code = medication_info['RxNorm']['code']  # RxNorm code
+            rxnorm_coding.display = medication_info['RxNorm']['display']  # Display name for RxNorm
+
+            # Assign the coding to the medication codeable concept
+            medication_codeable_concept.coding = [snomed_coding, rxnorm_coding]
+            medication_codeable_concept.text = medication_info['RxNorm']['display']  # Display name for the medication
+
+            # Assign the medication codeable concept to the request
+            request.medicationCodeableConcept = medication_codeable_concept
+            
+            
+
+            # Set the subject reference
+            request.subject = FHIRReference({"reference": f"Patient/{row['patient_nbr']}"})
+            request.informationSource = FHIRReference({"reference": f"Patient/{row['patient_nbr']}"})
+            
+            requests.append(request)  # Append the request to the list
+    
+    return requests
+
+
+
+
 #     med_statement = MedicationStatement()
 #     med_statement.status = "active" if row[medication] == "Steady" else "completed"
     
@@ -372,6 +524,13 @@ def upload_resources(data, batch_size=100):
         observation_resources = create_observation_resources(row)
         batch_resources.extend(observation_resources)
 
+        # Create Medication Requests
+        medication_requests = create_medication_request(row)
+        batch_resources.extend(medication_requests)
+
+        # Increment the counter for the next medication request
+
+        
         # Add and create Encounter resource
         # batch_resources.append(create_encounter_resource(row))
 
@@ -415,3 +574,32 @@ def upload_resources(data, batch_size=100):
 # Run
 
 upload_resources(data)
+
+
+
+
+# create Encounter resource
+# def create_encounter_resource(row):
+#     encounter = Encounter()
+#     encounter.id = str(row['encounter_id'])
+#     encounter.status = "finished"
+#     encounter.subject = FHIRReference({"reference": f"Patient/{row['patient_nbr']}"})
+
+#     encounter.class_fhir = Coding()
+#     encounter.class_fhir.system = "http://terminology.hl7.org/CodeSystem/v3-ActCode"
+#     encounter.class_fhir.code = str(row['admission_type_id'])
+#     encounter.class_fhir.display = "admission type"
+
+#     hospitalization = EncounterHospitalization()
+#     discharge_disposition = CodeableConcept()
+#     discharge_disposition.coding = [
+#         Coding({
+#             "system": "http://terminology.hl7.org/CodeSystem/discharge-disposition",
+#             "code": str(row['discharge_disposition_id']),
+#             "display": "discharge disposition"
+#         })
+#     ]
+#     hospitalization.dischargeDisposition = discharge_disposition
+    
+#     encounter.hospitalization = hospitalization
+#     return encounter

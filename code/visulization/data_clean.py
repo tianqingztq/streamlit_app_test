@@ -147,5 +147,3 @@ def convert_icd9_to_concept(dataframe, concept_file_path):
 
     
     return dataframe
-
-
