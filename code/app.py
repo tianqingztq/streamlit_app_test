@@ -3,10 +3,12 @@ import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
-DB_HOST="heathdbtest.clegyuw2syjp.us-east-2.rds.amazonaws.com"
-DB_NAME="postgres"
-DB_USER="postgres"
-DB_PASS="Ztq6440*"
+DB_HOST=os.environ['DB_HOST']
+DB_NAME=os.environ['DB_NAME']
+DB_USER=os.environ['DB_USER']
+DB_PASS=os.environ['DB_PASS']
+
+
 
 def apply_custom_styles():
     st.markdown("""
