@@ -2,7 +2,6 @@ fhirclient==4.3.0
 matplotlib==3.9.2
 pandas==2.0.3
 plotly==5.24.1
-psycopg2==2.9.3
 psycopg2-binary==2.9.3
 Requests==2.32.3
 streamlit==1.39.0
