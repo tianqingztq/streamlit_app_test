@@ -2,13 +2,13 @@ import streamlit as st
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+from visualization.visulization_patient import run_patient_visulization
+from visualization.visulization_pcp import run_pcp_visulization
 
 DB_HOST=os.environ['DB_HOST']
 DB_NAME=os.environ['DB_NAME']
 DB_USER=os.environ['DB_USER']
 DB_PASS=os.environ['DB_PASS']
-
-
 
 def apply_custom_styles():
     st.markdown("""
@@ -430,10 +430,13 @@ def show_diabetes_information():
     add_home_button()
     st.markdown('<h1 style="text-align: center;">Diabetes Information</h1>', unsafe_allow_html=True)
     st.write("Learn more about diabetes, its causes, symptoms, and prevention.")
-    
-    st.markdown('<div class="card">', unsafe_allow_html=True)
+    # Display visualization if "View Information" was clicked
+    # if st.session_state.get("current_page") == "info":
+
+    # st.markdown('<div class="card">', unsafe_allow_html=True)
     st.write("Content about diabetes will be displayed here.")
-    st.markdown('</div>', unsafe_allow_html=True)
+    run_patient_visulization()  # Call the visualization function from visulization_patient.py
+    # st.markdown('</div>', unsafe_allow_html=True)
     
     if st.button("Back to Journey Options"):
         st.session_state.current_page = "journey_options"
@@ -479,6 +482,8 @@ def show_hcp_dashboard():
         <p style='text-align: center; color: #666;'>Welcome, Dr. {st.session_state.user_name}</p>
     """, unsafe_allow_html=True)
     
+    # run pcp visulization information
+    run_pcp_visulization()
     # Add logout button
     col1, col2, col3 = st.columns([6, 2, 2])
     with col3:
