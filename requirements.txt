@@ -9,3 +9,4 @@ Werkzeug
 
 gcsfs
 st-files-connection
+scikit-learn
