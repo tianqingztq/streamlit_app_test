@@ -6,3 +6,7 @@ psycopg2-binary
 Requests
 streamlit
 Werkzeug
+
+gcsfs
+st-files-connection
+pickle
