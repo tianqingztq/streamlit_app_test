@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 # FHIR Server
-FHIR_SERVER_URL = "https://fhir-server-cs6440-final.ngrok.io/fhir"
+FHIR_SERVER_URL = "http://18.222.194.135:3838/fhir"
 
 def fetch_all_patients():
     patients = []

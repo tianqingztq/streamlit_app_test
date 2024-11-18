@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 # FHIR Server
-FHIR_SERVER_URL = "https://fhir-server-cs6440-final.ngrok.io/fhir/"
+FHIR_SERVER_URL = "http://18.222.194.135:3838/fhir"
 
 def fetch_all_patients():
     patients = []
@@ -284,29 +284,74 @@ def run_pcp_visulization():
     # ---------------------- Visualization -----------------------------
     # Streamlit application configuration
     # Add a main section title
-    st.header("Patient Information")
+    st.header("Population-Level Patient Data")
+    
+    st.markdown(
+        "This section provides insights into patient demographics and test results at a population level, "
+        "using publicly available data."
+    )
+    
+    st.subheader("Patient Information")
+
+    
 
 
-    # Filters
-    ## TODO
+    # -------------------- Sidebar Filters --------------------
+    st.sidebar.header("Filters")
+
+    # Gender filter
+    gender_filter = st.sidebar.selectbox(
+        "Select Gender",
+        options=['All'] + visulization_df['gender'].unique().tolist(),
+        index=0  # Default to 'All'
+    )
+
+    # Race filter
+    race_filter = st.sidebar.selectbox(
+        "Select Race",
+        options=['All'] + visulization_df['race'].unique().tolist(),
+        index=0  # Default to 'All'
+    )
+
+
+    # Age filter
+    age_filter = st.sidebar.selectbox(
+        "Select Age Range",
+        options=['All'] + visulization_df['age'].unique().tolist(),
+        index=0  # Default to 'All'
+    )
+    
+
+    # -------------------- Filter Application --------------------
+    # Apply filters only if a specific value is selected; otherwise, show full data
+    filtered_df = visulization_df.copy()
+
+    if gender_filter != 'All':
+        filtered_df = filtered_df[filtered_df['gender'] == gender_filter]
+    if race_filter != 'All':
+        filtered_df = filtered_df[filtered_df['race'] == race_filter]
+    if age_filter != 'All':
+        filtered_df = filtered_df[filtered_df['age'] == age_filter]
+
+
 
     # Age Pie Chart
     with st.expander("Age", expanded=True):
-        age_counts = visulization_df['age'].value_counts().reset_index()
+        age_counts = filtered_df['age'].value_counts().reset_index()
         age_counts.columns = ['Age', 'Count']
         fig = px.pie(age_counts, values='Count', names='Age', title='Age Distribution')
         st.plotly_chart(fig)
 
     # Gender Pie Chart
     with st.expander("Gender", expanded=True):
-        gender_counts = visulization_df['gender'].value_counts().reset_index()
+        gender_counts = filtered_df['gender'].value_counts().reset_index()
         gender_counts.columns = ['Gender', 'Count']
         fig = px.pie(gender_counts, values='Count', names='Gender', title='Gender Distribution')
         st.plotly_chart(fig)
 
     # Race Pie Chart
     with st.expander("Race", expanded=True):
-        race_counts = visulization_df['race'].value_counts().reset_index()
+        race_counts = filtered_df['race'].value_counts().reset_index()
         race_counts.columns = ['Race', 'Count']
         fig = px.pie(race_counts, values='Count', names='Race', title='Race Distribution')
         st.plotly_chart(fig)
@@ -314,7 +359,7 @@ def run_pcp_visulization():
     # Weight Histogram
     with st.expander("Weight", expanded=True):
         # Count occurrences of each weight range, including 'Unknown'
-        weight_counts = visulization_df['weight_range'].value_counts().reset_index()
+        weight_counts = filtered_df['weight_range'].value_counts().reset_index()
         weight_counts.columns = ['weight_range', 'count']
 
         # Ensure the weight_range is of string type for plotting
@@ -333,25 +378,25 @@ def run_pcp_visulization():
         st.markdown("**Note:** Weight is represented in kilograms (kg).")
 
     # Observation
-    st.header("Test Results")
+    st.subheader("Test Results")
 
     # A1C Test Results Visualization
     with st.expander("A1C Test Results", expanded=True):
-        a1c_counts = visulization_df['HHb-A1c'].value_counts().reset_index()
+        a1c_counts = filtered_df['HHb-A1c'].value_counts().reset_index()
         a1c_counts.columns = ['HHb-A1c', 'Count']
         fig_a1c = px.pie(a1c_counts, values='Count', names='HHb-A1c', title='A1C Test Results Distribution')
         st.plotly_chart(fig_a1c)
 
     # Glucose Serum Test Results Visualization
     with st.expander("Glucose Serum Test Results", expanded=True):
-        glucose_counts = visulization_df['Glucose [Moles/volume] in Blood'].value_counts().reset_index()
+        glucose_counts = filtered_df['Glucose [Moles/volume] in Blood'].value_counts().reset_index()
         glucose_counts.columns = ['Glucose Test Result', 'Count']
         fig_glucose = px.pie(glucose_counts, values='Count', names='Glucose Test Result', title='Glucose Serum Test Results Distribution')
         st.plotly_chart(fig_glucose)
 
     # Diagnostics
     # Melt value
-    diag_counts = visulization_df.melt(id_vars=['patient_id'], value_vars=['obs_diag_1', 'obs_diag_2', 'obs_diag_3', 'obs_diag_4', 'obs_diag_5', 'obs_diag_6'])
+    diag_counts = filtered_df.melt(id_vars=['patient_id'], value_vars=['obs_diag_1', 'obs_diag_2', 'obs_diag_3', 'obs_diag_4', 'obs_diag_5', 'obs_diag_6'])
 
     # Filter those values for other observations
     excluded_values = ['Body weight', 'Glucose [Moles/volume] in Blood', 'Laboratory studies (set)', 'Unknown']
@@ -385,12 +430,12 @@ def run_pcp_visulization():
 
 
     # Medicine
-    st.header("Medication")
+    st.subheader("Medication")
     # Prepare medication usage data
     medication_list = []
 
     # Iterate over each row in the visualization DataFrame
-    for index, row in visulization_df.iterrows():
+    for index, row in filtered_df.iterrows():
         patient_id = row['patient_id']  # Extract the patient ID from the row
         medication_usage = row['medication_usage']  # This should be a dict
 

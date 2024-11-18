@@ -29,7 +29,7 @@ from data_clean import (
 )
 
 # Use public server URL
-FHIR_SERVER_URL = "https://fhir-server-cs6440-final.ngrok.io/fhir"
+FHIR_SERVER_URL = "http://18.222.194.135:3838/fhir"
 
 # FHIR serve settings
 settings = {
