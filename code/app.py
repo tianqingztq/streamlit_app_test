@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from visualization.visulization_patient import run_patient_visulization
 from visualization.visulization_pcp import run_pcp_visulization
+from visualization.real_patient import run_real_patient_visulization
 
 DB_HOST=os.environ['DB_HOST']
 DB_NAME=os.environ['DB_NAME']
@@ -191,10 +192,229 @@ def init_db():
             full_name VARCHAR(255) NOT NULL,
             license_number VARCHAR(50) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                '''
+        )
+
+    # Create survey_results table
+    #cur.execute('''drop table if exists survey_results''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS survey_results (
+            id SERIAL PRIMARY KEY,
+            high_blood_pressure INTEGER,
+            high_cholesterol INTEGER,
+            cholesterol_check INTEGER,
+            bmi FLOAT,
+            smoking INTEGER,
+            stroke INTEGER,
+            heart_disease INTEGER,
+            physical_activity INTEGER,
+            fruit_consumption INTEGER,
+            vegetable_consumption INTEGER,
+            heavy_drinker INTEGER,
+            healthcare_coverage INTEGER,
+            doctor_cost_barrier INTEGER,
+            general_health INTEGER,
+            mental_health INTEGER,
+            physical_health INTEGER,
+            difficulty_walking INTEGER,
+            gender INTEGER,
+            age INTEGER,
+            education INTEGER,
+            income INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     conn.commit()
     return conn
+
+def load_ml_model():
+    """Load the pre-trained machine learning model pickle file"""
+    try:
+        # Load the model from pickle file
+        #with open('./ML_model/final_model.pkl', 'rb') as model_file:
+        st_conn = st.connection('gcs', type=FilesConnection)
+        with st_conn.open('streamlit-bucket-tq/rf_model.pkl', 'rb') as model_file:
+            model = pickle.load(model_file)
+        return model
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None, None
+
+
+def get_latest_survey_result(conn):
+    """Retrieve the latest survey result from the database"""
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT 
+                high_blood_pressure, high_cholesterol, cholesterol_check, 
+                bmi, smoking, stroke, heart_disease, physical_activity,
+                fruit_consumption, vegetable_consumption, heavy_drinker,
+                healthcare_coverage, doctor_cost_barrier, general_health,
+                mental_health, physical_health, difficulty_walking,
+                gender, age, education, income
+            FROM survey_results 
+            ORDER BY created_at DESC 
+            LIMIT 1
+        """)
+        result = cur.fetchone()
+        if result:
+            # Convert to dictionary with column names
+            columns = [
+                'HighBP', 'HighChol', 'CholCheck',
+                'BMI', 'Smoker', 'Stroke', 'HeartDiseaseorAttack', 'PhysActivity',
+                'Fruits', 'Veggies', 'HvyAlcoholConsump',
+                'AnyHealthcare', 'NoDocbcCost', 'GenHlth',
+                'MentHlth', 'PhysHlth', 'DiffWalk',
+                'Sex', 'Age', 'Education', 'Income'
+            ]
+            return dict(zip(columns, result))
+        return None
+    except Exception as e:
+        st.error(f"Error retrieving survey result: {e}")
+        return None
+
+def prepare_data_for_prediction(data):
+    """Prepare the survey data for model prediction"""
+
+    # Create a DataFrame with the expected column order
+    feature_order = [
+        'HighBP', 'HighChol', 'CholCheck',
+        'BMI', 'Smoker', 'Stroke', 'HeartDiseaseorAttack', 'PhysActivity',
+        'Fruits', 'Veggies', 'HvyAlcoholConsump',
+        'AnyHealthcare', 'NoDocbcCost', 'GenHlth',
+        'MentHlth', 'PhysHlth', 'DiffWalk',
+        'Sex', 'Age', 'Education', 'Income'
+    ]
+    
+    # Create DataFrame with ordered features
+    df = pd.DataFrame([{key: data[key] for key in feature_order}])
+            
+    return df
+
+
+def predict_diabetes_risk(data, model):
+    """Make diabetes prediction using the model"""
+    try:
+        # Prepare the data
+        X = prepare_data_for_prediction(data)
+        if X is None:
+            return None
+        
+        # Make prediction
+        prediction = model.predict(X)
+        probability = model.predict_proba(X)[0]
+        
+        return {
+            'prediction': prediction[0],
+            'probability': probability[1]  # Probability of having diabetes
+        }
+    except Exception as e:
+        st.error(f"Error making prediction: {e}")
+        st.error(f"Model type: {type(model)}")
+        return None
+
+
+def display_prediction_results(prediction_result):
+    """Display the prediction results with a user-friendly interface"""
+    st.markdown("## Your Diabetes Risk Assessment")
+    
+    # Calculate risk level
+    probability = prediction_result['probability']
+    if prediction_result['prediction'] >= 1:
+        if probability > 0.7:
+            risk_level = "High"
+            color = "#ff4b4b"
+            bg_color = "#fff3f3"
+        else:
+            risk_level = "Moderate"
+            color = "#ffa500"
+            bg_color = "#fff8f0"
+    else:
+        risk_level = "Low"
+        color = "#00cc00"
+        bg_color = "#f0fff0"
+
+    # Display risk level box
+    st.markdown(f"""
+        <div style='
+            background-color: {bg_color};
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid {color};
+            margin-bottom: 20px;
+        '>
+            <h3 style='color: {color}; margin-top: 0;'>{risk_level} Risk Level</h3>
+            <p style='font-size: 1.1em; margin-bottom: 10px;'>
+                Your risk assessment indicates a {risk_level.lower()} risk for diabetes
+            </p>
+            <p style='font-size: 1.2em; font-weight: bold;'>
+                Risk Probability: {probability:.1%}
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Display recommendations based on risk level
+    st.markdown("### Recommended Actions")
+    
+    if prediction_result['prediction'] >= 1:
+        st.markdown("""
+        <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+            <h4 style='color: #1a1f36; margin-top: 0;'>Important Next Steps:</h4>
+            <ol>
+                <li style='margin-bottom: 10px;'><strong>Consult a Healthcare Provider</strong>
+                    <ul>
+                        <li>Schedule an appointment with your doctor</li>
+                        <li>Get comprehensive blood sugar testing</li>
+                        <li>Discuss your risk factors and management plan</li>
+                    </ul>
+                </li>
+                <li style='margin-bottom: 10px;'><strong>Lifestyle Modifications</strong>
+                    <ul>
+                        <li>Follow a balanced, diabetes-friendly diet</li>
+                        <li>Engage in regular physical activity (150 minutes/week)</li>
+                        <li>Maintain a healthy weight</li>
+                    </ul>
+                </li>
+                <li style='margin-bottom: 10px;'><strong>Regular Monitoring</strong>
+                    <ul>
+                        <li>Monitor blood sugar levels as recommended</li>
+                        <li>Track blood pressure and cholesterol</li>
+                        <li>Keep a log of your health metrics</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px;'>
+            <h4 style='color: #1a1f36; margin-top: 0;'>Maintaining Good Health:</h4>
+            <ol>
+                <li style='margin-bottom: 10px;'><strong>Preventive Care</strong>
+                    <ul>
+                        <li>Schedule regular check-ups</li>
+                        <li>Get routine blood sugar screenings</li>
+                        <li>Monitor your blood pressure</li>
+                    </ul>
+                </li>
+                <li style='margin-bottom: 10px;'><strong>Healthy Lifestyle</strong>
+                    <ul>
+                        <li>Maintain a balanced diet</li>
+                        <li>Regular exercise routine</li>
+                        <li>Adequate sleep and stress management</li>
+                    </ul>
+                </li>
+                <li style='margin-bottom: 10px;'><strong>Risk Awareness</strong>
+                    <ul>
+                        <li>Learn about diabetes symptoms</li>
+                        <li>Stay informed about prevention strategies</li>
+                        <li>Regular health screenings</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
 
 def hash_password(password):
     return generate_password_hash(password, method='pbkdf2:sha256')
