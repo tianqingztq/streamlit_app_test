@@ -8,6 +8,7 @@ from visualization.real_patient import run_real_patient_visulization
 from sklearn.ensemble import RandomForestClassifier
 from st_files_connection import FilesConnection
 import pandas as pd
+import pickle
 
 DB_HOST=os.environ['DB_HOST']
 DB_NAME=os.environ['DB_NAME']
