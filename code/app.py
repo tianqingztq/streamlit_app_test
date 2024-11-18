@@ -5,6 +5,9 @@ import os
 from visualization.visulization_patient import run_patient_visulization
 from visualization.visulization_pcp import run_pcp_visulization
 from visualization.real_patient import run_real_patient_visulization
+from sklearn.ensemble import RandomForestClassifier
+from st_files_connection import FilesConnection
+import pandas as pd
 
 DB_HOST=os.environ['DB_HOST']
 DB_NAME=os.environ['DB_NAME']
@@ -192,8 +195,8 @@ def init_db():
             full_name VARCHAR(255) NOT NULL,
             license_number VARCHAR(50) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                '''
         )
+    ''')
 
     # Create survey_results table
     #cur.execute('''drop table if exists survey_results''')
@@ -554,9 +557,135 @@ def show_hcp_auth():
                 else:
                     st.error("All fields are required.")
 
+def save_survey_results(conn, survey_data):
+    """Save survey results to database"""
+    cur = conn.cursor()
+    try:
+        # Convert categorical responses to numeric values
+        numeric_data = convert_survey_responses(survey_data)
+        
+        cur.execute('''
+            INSERT INTO survey_results (
+                high_blood_pressure, high_cholesterol, cholesterol_check, 
+                bmi, smoking, stroke, heart_disease, physical_activity,
+                fruit_consumption, vegetable_consumption, heavy_drinker,
+                healthcare_coverage, doctor_cost_barrier, general_health,
+                mental_health, physical_health, difficulty_walking,
+                gender, age, education, income
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s
+            )
+        ''', (
+            numeric_data['high_bp'],
+            numeric_data['high_chol'],
+            numeric_data['chol_check'],
+            numeric_data['bmi'],
+            numeric_data['smoking'],
+            numeric_data['stroke'],
+            numeric_data['heart_disease'],
+            numeric_data['physical_activity'],
+            numeric_data['fruit_consumption'],
+            numeric_data['vegetable_consumption'],
+            numeric_data['heavy_drinker'],
+            numeric_data['healthcare_coverage'],
+            numeric_data['doctor_cost_barrier'],
+            numeric_data['general_health'],
+            numeric_data['mental_health'],
+            numeric_data['physical_health'],
+            numeric_data['difficulty_walking'],
+            numeric_data['gender'],
+            numeric_data['age'],
+            numeric_data['education'],
+            numeric_data['income']
+        ))
+        conn.commit()
+        return True
+    except Exception as e:
+        st.error(f"Error saving survey results: {e}")
+        return False
+
+def convert_survey_responses(survey_data):
+    """Convert categorical responses to numeric values"""
+    
+    # Conversion dictionaries
+    yes_no_mapping = {
+        "Yes": 1,
+        "No": 0,
+        "": None
+    }
+    
+    general_health_mapping = {
+        "Excellent": 1,
+        "Very Good": 2,
+        "Good": 3,
+        "Fair": 4,
+        "Poor": 5,
+        "": None
+    }
+    
+    gender_mapping = {
+        "Male": 1,
+        "Female": 2,
+        "Other": 3,
+        "": None
+    }
+    
+    education_mapping = {
+        "Never attended school or only kindergarten": 1,
+        "Grades 1 through 8 (Elementary)": 2,
+        "Grades 9 through 11 (Some high school)": 3,
+        "Grade 12 or GED (High school graduate)": 4,
+        "College 1 year to 3 years (Some college or technical school)": 5,
+        "College 4 years or more (College graduate)": 6,
+        "": None
+    }
+    
+    income_mapping = {
+        "Less than $10,000": 1,
+        "Less than $15,000": 2,
+        "Less than $20,000": 3,
+        "Less than $25,000": 4,
+        "Less than $35,000": 5,
+        "Less than $50,000": 6,
+        "Less than $75,000": 7,
+        "$75,000 or more": 8,
+        "": None
+    }
+    
+    # Convert the data
+    converted_data = {
+        'high_bp': yes_no_mapping[survey_data['high_bp']],
+        'high_chol': yes_no_mapping[survey_data['high_chol']],
+        'chol_check': yes_no_mapping[survey_data['chol_check']],
+        'bmi': float(survey_data['bmi']) if survey_data['bmi'] is not None else None,
+        'smoking': yes_no_mapping[survey_data['smoking']],
+        'stroke': yes_no_mapping[survey_data['stroke']],
+        'heart_disease': yes_no_mapping[survey_data['heart_disease']],
+        'physical_activity': yes_no_mapping[survey_data['physical_activity']],
+        'fruit_consumption': yes_no_mapping[survey_data['fruit_consumption']],
+        'vegetable_consumption': yes_no_mapping[survey_data['vegetable_consumption']],
+        'heavy_drinker': yes_no_mapping[survey_data['heavy_drinker']],
+        'healthcare_coverage': yes_no_mapping[survey_data['healthcare_coverage']],
+        'doctor_cost_barrier': yes_no_mapping[survey_data['doctor_cost_barrier']],
+        'general_health': general_health_mapping[survey_data['general_health']],
+        'mental_health': survey_data['mental_health'],
+        'physical_health': survey_data['physical_health'],
+        'difficulty_walking': yes_no_mapping[survey_data['difficulty_walking']],
+        'gender': gender_mapping[survey_data['gender']],
+        'age': survey_data['age'],
+        'education': education_mapping[survey_data['education']],
+        'income': income_mapping[survey_data['income']]
+    }
+    
+    return converted_data
+    
 def show_diabetes_risk_survey():
     add_home_button()
     st.markdown('<h1 style="text-align: center;">Diabetes Risk Assessment Survey</h1>', unsafe_allow_html=True)
+
+    # Initialize database connection
+    conn = init_db()
     
     with st.form("diabetes_risk_survey"):
         st.markdown('<div class="survey-section">', unsafe_allow_html=True)
@@ -578,10 +707,9 @@ def show_diabetes_risk_survey():
         heavy_drinker = st.radio("Are you a heavy drinker? (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week)", options=["", "Yes", "No"])
         healthcare_coverage = st.radio("Do you have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc.?", options=["", "Yes", "No"])
         doctor_cost_barrier = st.radio("Was there a time in the past 12 months when you needed to see a doctor but could not because of cost?", options=["", "Yes", "No"])
-        general_health = st.select_slider(
+        general_health = st.radio(
             "Would you say that in general your health is:",
-            options=["", "Excellent", "Very Good", "Good", "Fair", "Poor"],
-            value=""
+            options=["", "Excellent", "Very Good", "Good", "Fair", "Poor"]
         )
         mental_health = st.number_input(
             "Now thinking about your mental health, which includes stress, depression, and problems with emotions, for how many days during the past 30 days was your mental health not good?",
@@ -598,7 +726,7 @@ def show_diabetes_risk_survey():
         st.subheader("Demographics")
         gender = st.radio("What is your gender?", options=["", "Male", "Female", "Other"])
         age = st.number_input("What is your age?", min_value=18, max_value=120, value=None)
-        education = st.select_slider(
+        education = st.radio(
             "What is your education level?",
             options=[
                 "",
@@ -608,10 +736,9 @@ def show_diabetes_risk_survey():
                 "Grade 12 or GED (High school graduate)",
                 "College 1 year to 3 years (Some college or technical school)",
                 "College 4 years or more (College graduate)"
-            ],
-            value=""
+            ]
         )
-        income = st.select_slider(
+        income = st.radio(
             "What is your Income level?",
             options=[
                 "",
@@ -623,28 +750,66 @@ def show_diabetes_risk_survey():
                 "Less than $50,000",
                 "Less than $75,000",
                 "$75,000 or more"
-            ],
-            value=""
+            ]
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
         submitted = st.form_submit_button("Submit Survey")
         
-        if submitted:
-            # Validate that all questions are answered
-            all_fields = [high_bp, high_chol, chol_check, bmi, smoking, stroke, heart_disease,
-                         physical_activity, fruit_consumption, vegetable_consumption, heavy_drinker,
-                         healthcare_coverage, doctor_cost_barrier, general_health, mental_health,
-                         physical_health, difficulty_walking, gender, age, education, income]
-            
-            if "" in all_fields or None in all_fields:
-                st.error("Please answer all questions before submitting.")
-            else:
-                st.success("Thank you for completing the survey!")
-                st.write("Based on your responses, we recommend discussing your risk factors with a healthcare provider.")
-                if st.button("Return to Journey Options"):
-                    st.session_state.current_page = "journey_options"
-                    st.rerun()
+    if submitted:
+        # Create a dictionary of survey responses
+        survey_data = {
+            'high_bp': high_bp,
+            'high_chol': high_chol,
+            'chol_check': chol_check,
+            'bmi': bmi,
+            'smoking': smoking,
+            'stroke': stroke,
+            'heart_disease': heart_disease,
+            'physical_activity': physical_activity,
+            'fruit_consumption': fruit_consumption,
+            'vegetable_consumption': vegetable_consumption,
+            'heavy_drinker': heavy_drinker,
+            'healthcare_coverage': healthcare_coverage,
+            'doctor_cost_barrier': doctor_cost_barrier,
+            'general_health': general_health,
+            'mental_health': mental_health,
+            'physical_health': physical_health,
+            'difficulty_walking': difficulty_walking,
+            'gender': gender,
+            'age': age,
+            'education': education,
+            'income': income
+        }
+        
+        # Check for empty responses
+        empty_fields = [field for field, value in survey_data.items() if value == "" or value is None]
+        
+        if empty_fields:
+            st.error("Please answer all questions before submitting.")
+        else:
+            # Save to database
+            if save_survey_results(conn, survey_data):
+                st.success("Thank you for completing the survey! Your responses have been saved.")
+                
+                # Load model and make prediction
+                model = load_ml_model()
+                if model:
+                    # Get latest survey result
+                    latest_result = get_latest_survey_result(conn)
+                    if latest_result:
+                        # Make prediction
+                        prediction_result = predict_diabetes_risk(latest_result, model)
+                        if prediction_result:
+                            # Display prediction results
+                            display_prediction_results(prediction_result)
+                            
+                            # Navigation button
+                            if st.button("Return to Journey Options"):
+                                st.session_state.current_page = "journey_options"
+                                st.rerun()
+                else:
+                    st.error("Unable to load the prediction model. Please try again later.")
 
 def show_diabetes_information():
     add_home_button()
