@@ -7,6 +7,7 @@ from datetime import datetime
 import re
 
 # Function to load and process JSON files
+@st.cache_resource
 def load_patient_data(directory):
     patient_list = []
     bmi_data = []
@@ -102,9 +103,21 @@ def assign_encounter_labels(bmi_df):
     bmi_df["EncounterLabel"] = bmi_df["EncounterNumber"].apply(lambda x: f"Encounter{x}")
     return bmi_df
 
-def run_real_patient_visulization():
+def run_real_patient_visulization(user_id):
+    # Define available user directories
+    user_data_directories = {
+        "Winnie": "../../synthea/Winnie",
+        "Yi": "../../synthea/Yi"
+    }
+
+    # Check if user ID is valid and data directory exists
+    if user_id not in user_data_directories or not os.path.exists(user_data_directories[user_id]):
+        st.title(f"Welcome Dr. {user_id}")
+        st.warning("There are no available patient information for you.")
+        return
+
     # Load patient data
-    data_directory = "../../synthea"  # Replace with the directory containing your JSON files
+    data_directory = user_data_directories[user_id]
     patient_df, bmi_df = load_patient_data(data_directory)
     bmi_df = assign_encounter_labels(bmi_df)
 
@@ -113,6 +126,7 @@ def run_real_patient_visulization():
     st.title("Patient Overview")
 
     # Sidebar: Dropdown for patient selection
+    st.empty()
     st.sidebar.header("Patient Selection")
     patient_names = patient_df["Name"].unique().tolist()
     selected_patient = st.sidebar.selectbox("Choose a Patient", options=patient_names)
