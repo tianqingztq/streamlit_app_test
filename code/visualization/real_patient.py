@@ -105,11 +105,12 @@ def assign_encounter_labels(bmi_df):
 
 def run_real_patient_visulization(user_id):
     # Define available user directories
+    dir = os.getcwd()
     user_data_directories = {
-        "Winnie": "../../synthea/Winnie",
+        "Winnie": os.path.join(dir,"synthea","Winnie") #"../../synthea/Winnie",
         "Yi": "../../synthea/Yi"
     }
-    st.write(os.getcwd())
+    # st.write(os.getcwd())
     # Check if user ID is valid and data directory exists
     if user_id not in user_data_directories or not os.path.exists(user_data_directories[user_id]):
         st.title(f"Welcome Dr. {user_id}")
