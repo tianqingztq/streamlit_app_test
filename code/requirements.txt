@@ -6,7 +6,6 @@ psycopg2-binary
 Requests
 streamlit
 Werkzeug
-json
 os
 datetime
 re
