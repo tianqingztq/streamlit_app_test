@@ -105,10 +105,9 @@ def assign_encounter_labels(bmi_df):
 
 def run_real_patient_visulization(user_id):
     # Define available user directories
-    dir = os.path.join(os.getcwd(),"synthea","Winnie")
     user_data_directories = {
-        "Winnie":  dir, #"../../synthea/Winnie",
-        "Yi": "../../synthea/Yi"
+        "Winnie":  os.path.join(os.getcwd(),"synthea","Winnie"), #"../../synthea/Winnie",
+        "Yi": os.path.join(os.getcwd(),"synthea","Yi") #"../../synthea/Yi"
     }
     # st.write(os.getcwd())
     # Check if user ID is valid and data directory exists
