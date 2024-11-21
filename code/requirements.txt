@@ -6,9 +6,7 @@ psycopg2-binary
 Requests
 streamlit
 Werkzeug
-os
 datetime
-re
 uuid
 collections
 
