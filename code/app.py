@@ -2,8 +2,8 @@ import streamlit as st
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
-from visualization.visulization_patient import run_patient_visulization
-from visualization.visulization_pcp import run_pcp_visulization
+from visualization.visulization import run_patient_visulization
+from visualization.visulization import run_pcp_visulization
 from visualization.real_patient import run_real_patient_visulization
 from sklearn.ensemble import RandomForestClassifier
 from st_files_connection import FilesConnection
@@ -14,6 +14,9 @@ DB_HOST=os.environ['DB_HOST']
 DB_NAME=os.environ['DB_NAME']
 DB_USER=os.environ['DB_USER']
 DB_PASS=os.environ['DB_PASS']
+
+
+
 
 def apply_custom_styles():
     st.markdown("""
@@ -861,15 +864,52 @@ def show_journey_options():
             st.session_state.current_page = "info"
             st.rerun()
 
+
+def show_population_dashboard():
+    st.markdown("<h1 style='text-align: center;'>Population Level Dashboard</h1>", unsafe_allow_html=True)
+    run_pcp_visulization()
+    
+
+def show_individual_dashboard():
+    st.markdown("<h1 style='text-align: center;'>Individual Level Dashboard</h1>", unsafe_allow_html=True)
+    run_real_patient_visulization(st.session_state.user_name)
+    
+    
+    
+
 def show_hcp_dashboard():
     add_home_button()
     st.markdown(f"""
         <h1 style='text-align: center;'>HCP Dashboard</h1>
         <p style='text-align: center; color: #666;'>Welcome, Dr. {st.session_state.user_name}</p>
+            Choose the information about patients you want to view
+        </p>
     """, unsafe_allow_html=True)
     
-    # run pcp visulization information
-    run_pcp_visulization()
+    col1, spacer, col2 = st.columns([1, 0.1, 1])
+    
+    with col1:
+        st.markdown("""
+            <div class="card">
+                <h2 class="card-title">Population Level Dashboard</h2>
+                <p class="card-text">This section provides insights into patient demographics and test results at a population level using publicly available data.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("View Population Information", use_container_width=True):
+            st.session_state.current_page = "pcp_visulization"
+            st.rerun()
+
+    with col2:
+        st.markdown("""
+            <div class="card">
+                <h2 class="card-title">Individual Level Dashboard</h2>
+                <p class="card-text">This section provides insights into your patient basic information using existing patient information.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        if st.button("View Each Patient Information", use_container_width=True):
+            st.session_state.current_page = "real_patient_visulization"
+            st.rerun()
+    
     # Add logout button
     col1, col2, col3 = st.columns([6, 2, 2])
     with col3:
@@ -878,6 +918,7 @@ def show_hcp_dashboard():
             st.session_state.user_name = None
             st.session_state.current_page = "home"
             st.rerun()
+    
 
 def main():
     st.set_page_config(
@@ -900,6 +941,10 @@ def main():
     # Navigation logic
     if st.session_state.authenticated:
         show_hcp_dashboard()
+        if st.session_state.current_page == "pcp_visulization":
+            show_population_dashboard()
+        elif st.session_state.current_page == "real_patient_visulization":
+            show_individual_dashboard()
     else:
         if st.session_state.current_page == "home":
             show_home()
