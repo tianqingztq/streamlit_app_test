@@ -8,7 +8,6 @@ streamlit
 Werkzeug
 datetime
 uuid
-collections
 
 gcsfs
 st-files-connection
