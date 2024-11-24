@@ -309,7 +309,8 @@ def prepare_data_for_prediction(data):
         scaler = pickle.load(model_file)
 
     # Transform the test data using the same scaler
-    df = scaler.transform(df)
+    
+    df = scaler.transform(df.to_numpy())
     
     return df
 
