@@ -11,6 +11,7 @@ from xgboost import XGBClassifier
 from st_files_connection import FilesConnection
 import pandas as pd
 import pickle
+import joblib
 
 DB_HOST=os.environ['DB_HOST']
 DB_NAME=os.environ['DB_NAME']
@@ -310,7 +311,7 @@ def prepare_data_for_prediction(data):
 
     # Transform the test data using the same scaler
     
-    df = scaler.transform(df.to_numpy())
+    df = scaler.transform(df)
     
     return df
 
