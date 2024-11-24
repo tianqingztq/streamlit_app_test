@@ -307,7 +307,7 @@ def prepare_data_for_prediction(data):
     with st_conn.open(
         'streamlit-bucket-tq/my_scaler.pkl', 
         'rb') as model_file:
-        scaler = pickle.load(model_file)
+        scaler = joblib.load(model_file)
 
     # Transform the test data using the same scaler
     
