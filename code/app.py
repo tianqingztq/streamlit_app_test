@@ -301,7 +301,13 @@ def prepare_data_for_prediction(data):
     
     # Create DataFrame with ordered features
     df = pd.DataFrame([{key: data[key] for key in feature_order}])
-    scaler = StandardScaler()
+
+    st_conn = st.connection('gcs', type=FilesConnection)
+    with st_conn.open(
+        'streamlit-bucket-tq/my_scaler.pkl', 
+        'rb') as model_file:
+        scaler = pickle.load(model_file)
+
     # Transform the test data using the same scaler
     df = scaler.transform(df)
     
