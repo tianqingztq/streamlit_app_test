@@ -5,7 +5,7 @@ import os
 from visualization.visulization import run_patient_visulization
 from visualization.visulization import run_pcp_visulization
 from visualization.real_patient import run_real_patient_visulization
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, XGB
 from st_files_connection import FilesConnection
 import pandas as pd
 import pickle
@@ -240,7 +240,10 @@ def load_ml_model():
         # Load the model from pickle file
         #with open('./ML_model/final_model.pkl', 'rb') as model_file:
         st_conn = st.connection('gcs', type=FilesConnection)
-        with st_conn.open('streamlit-bucket-tq/rf_model.pkl', 'rb') as model_file:
+        with st_conn.open(
+            # 'streamlit-bucket-tq/rf_model.pkl', 
+            'streamlit-bucket-tq/xgb_model.pkl', 
+            'rb') as model_file:
             model = pickle.load(model_file)
         return model
     except Exception as e:
