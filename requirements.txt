@@ -16,4 +16,5 @@ collections
 gcsfs
 st-files-connection
 scikit-learn
+xgboost
 
