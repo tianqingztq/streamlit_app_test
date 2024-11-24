@@ -5,7 +5,8 @@ import os
 from visualization.visulization import run_patient_visulization
 from visualization.visulization import run_pcp_visulization
 from visualization.real_patient import run_real_patient_visulization
-from sklearn.ensemble import RandomForestClassifier, XGB
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from st_files_connection import FilesConnection
 import pandas as pd
 import pickle
