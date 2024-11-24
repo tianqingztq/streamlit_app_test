@@ -5,6 +5,7 @@ import os
 from visualization.visulization import run_patient_visulization
 from visualization.visulization import run_pcp_visulization
 from visualization.real_patient import run_real_patient_visulization
+from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from st_files_connection import FilesConnection
@@ -300,7 +301,10 @@ def prepare_data_for_prediction(data):
     
     # Create DataFrame with ordered features
     df = pd.DataFrame([{key: data[key] for key in feature_order}])
-            
+    scaler = StandardScaler()
+    # Transform the test data using the same scaler
+    df = scaler.transform(df)
+    
     return df
 
 
