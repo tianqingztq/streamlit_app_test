@@ -243,7 +243,7 @@ def load_ml_model():
         st_conn = st.connection('gcs', type=FilesConnection)
         with st_conn.open(
             # 'streamlit-bucket-tq/rf_model.pkl', 
-            'streamlit-bucket-tq/xgb_model.pkl', 
+            'streamlit-bucket-tq/xgboost_model.pkl', 
             'rb') as model_file:
             model = pickle.load(model_file)
         return model
