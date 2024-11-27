@@ -107,7 +107,7 @@ def run_real_patient_visulization(user_id):
     # Define available user directories
     user_data_directories = {
         "Winnie":  os.path.join(os.getcwd(),"synthea","Winnie"), #"../../synthea/Winnie",
-        "Yi": os.path.join(os.getcwd(),"synthea","Yi") #"../../synthea/Yi"
+        "Test": os.path.join(os.getcwd(),"synthea","Test") #"../../synthea/Yi"
     }
     # st.write(os.getcwd())
     # Check if user ID is valid and data directory exists
